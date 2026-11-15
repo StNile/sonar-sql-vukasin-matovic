@@ -1,0 +1,48 @@
+<mat-sidenav-container class="example-container">
+  <mat-sidenav mode="over" [fixedInViewport]="true" opened mode="side">
+    <mat-accordion>
+      <a mat-button routerLink="" style="text-align: center">
+        <mat-icon>home</mat-icon>
+      </a>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title> Aplikacija </mat-panel-title>
+          <mat-panel-description>
+            Aplikacija za vođenje evidencije o pacijentima
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <mat-nav-list>
+          <a mat-raised-button routerLink="/bolnica" style="background-color: rgb(45, 171, 45)"
+            >Bolnica</a
+          >
+        </mat-nav-list>
+        <mat-nav-list>
+          <a mat-raised-button routerLink="/dijagnoza" style="background-color: rgb(214, 131, 48)"
+            >Dijagnoza</a
+          >
+        </mat-nav-list>
+        <mat-nav-list>
+          <a mat-raised-button routerLink="/odeljenje" style="background-color: rgb(220, 68, 157)"
+            >Odeljenje</a
+          >
+        </mat-nav-list>
+      </mat-expansion-panel>
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title style="text-align: left">Informacije</mat-panel-title>
+          <mat-panel-description> Osnovne informacije o aplikaciji </mat-panel-description>
+        </mat-expansion-panel-header>
+        <mat-nav-list>
+          <a mat-button routerLink="/about">O nama</a>
+        </mat-nav-list>
+        <mat-nav-list>
+          <a mat-button routerLink="/author">Autor</a>
+        </mat-nav-list>
+        <mat-nav-list>
+          <a mat-button routerLink="">Početna</a>
+        </mat-nav-list>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </mat-sidenav>
+  <router-outlet></router-outlet>
+</mat-sidenav-container>

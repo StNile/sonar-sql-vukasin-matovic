@@ -1,0 +1,867 @@
+
+-- Kreiranje seme
+create schema Vulkanizer authorization dbo
+go
+
+
+
+if OBJECT_ID('Vulkanizer.Popust', 'U') is not null drop table Vulkanizer.Popust;
+if OBJECT_ID('Vulkanizer.Akcija', 'U') is not null drop table Vulkanizer.Akcija;
+if OBJECT_ID('Vulkanizer.Usluga_tehnickog_pregleda', 'U') is not null drop table Vulkanizer.Usluga_tehnickog_pregleda;
+if OBJECT_ID('Vulkanizer.Usluga_rucnog_pranja', 'U') is not null drop table Vulkanizer.Usluga_rucnog_pranja;
+if OBJECT_ID('Vulkanizer.Vulkanizerska_usluga', 'U') is not null drop table Vulkanizer.Vulkanizerska_usluga;
+if OBJECT_ID('Vulkanizer.se_izvrsava', 'U') is not null drop table Vulkanizer.se_izvrsava;
+if OBJECT_ID('Vulkanizer.koristi_se', 'U') is not null drop table Vulkanizer.koristi_se;
+if OBJECT_ID('Vulkanizer.se_koristi', 'U') is not null drop table Vulkanizer.se_koristi;
+if OBJECT_ID('Vulkanizer.se_upotrebljava_u', 'U') is not null drop table Vulkanizer.se_upotrebljava_u;
+if OBJECT_ID('Vulkanizer.ima_kapacitet', 'U') is not null drop table Vulkanizer.ima_kapacitet;
+if OBJECT_ID('Vulkanizer.ima_zalihe', 'U') is not null drop table Vulkanizer.ima_zalihe;
+if OBJECT_ID('Vulkanizer.isporucuje', 'U') is not null drop table Vulkanizer.isporucuje;
+if OBJECT_ID('Vulkanizer.dobavlja', 'U') is not null drop table Vulkanizer.dobavlja;
+if OBJECT_ID('Vulkanizer.Masina', 'U') is not null drop table Vulkanizer.Masina;
+if OBJECT_ID('Vulkanizer.Radionica', 'U') is not null drop table Vulkanizer.Radionica;
+if OBJECT_ID('Vulkanizer.Katalog_usluga', 'U') is not null drop table Vulkanizer.Katalog_usluga;
+if OBJECT_ID('Vulkanizer.Tip_radionice', 'U') is not null drop table Vulkanizer.Tip_radionice;
+if OBJECT_ID('Vulkanizer.Tip_Masine', 'U') is not null drop table Vulkanizer.Tip_Masine;
+if OBJECT_ID('Vulkanizer.Materijal', 'U') is not null drop table Vulkanizer.Materijal;
+if OBJECT_ID('Vulkanizer.Dobavljac', 'U') is not null drop table Vulkanizer.Dobavljac;
+go
+
+
+-- Kreiranje tablea i ogranicenja
+
+create table Vulkanizer.Dobavljac
+(
+    dobavljac_id int NOT NULL,
+    email_dob varchar(30) NOT NULL,
+    naziv_dob varchar(50) NOT NULL,
+    telefon_dob varchar(20) NOT NULL,
+    grad_dob varchar(30) NOT NULL,
+
+    constraint PK_Dobavljac primary key(dobavljac_id),
+    constraint CHK_Dobavljac_email check(email_dob LIKE '%@%')
+)
+go
+
+create table Vulkanizer.Materijal
+(
+    materijal_id int NOT NULL,
+    naziv_mat varchar(30) NOT NULL,
+    proizvodjac_mat varchar(50) NOT NULL,
+    kolicina_mat DECIMAL(10,2) NOT NULL,
+
+    constraint PK_Materijal primary key(materijal_id)
+)
+go
+
+create table Vulkanizer.dobavlja
+(
+    dobavljac_id int NOT NULL,
+    materijal_id int NOT NULL,
+
+    constraint PK_dobavlja primary key(dobavljac_id, materijal_id),
+    
+    constraint FK_dobavlja_Dobavljac foreign key(dobavljac_id)
+        references Vulkanizer.Dobavljac(dobavljac_id),
+    constraint FK_dobavlja_Materijal foreign key(materijal_id)
+        references Vulkanizer.Materijal(materijal_id)
+)
+go
+
+create table Vulkanizer.Tip_Masine
+(
+    tip_id int NOT NULL,
+    nazim_tm varchar(50) NOT NULL,
+
+    constraint PK_Tip_Masine primary key(tip_id)
+)
+go
+
+create table Vulkanizer.Masina
+(
+    tip_id int NOT NULL,
+    masina_id int NOT NULL,
+    serijski_broj_mas varchar(30) NOT NULL,
+    model_mas varchar(50) NOT NULL,
+
+    constraint PK_Masina primary key(tip_id, masina_id),
+    
+    constraint FK_Masina_Tip_Masine foreign key(tip_id)
+        references Vulkanizer.Tip_Masine(tip_id)
+)
+go
+
+create table Vulkanizer.isporucuje
+(
+    masina_id int NOT NULL,
+    tip_id int NOT NULL,
+    dobavljac_id int NOT NULL,
+
+    constraint PK_isporucuje primary key(masina_id, tip_id, dobavljac_id),
+
+    constraint FK_isporucuje_Masina foreign key(tip_id, masina_id)
+        references Vulkanizer.Masina(tip_id, masina_id),
+    constraint FK_isporucuje_Dobavljac foreign key(dobavljac_id)
+        references Vulkanizer.Dobavljac(dobavljac_id)
+)
+go
+
+create table Vulkanizer.Tip_radionice
+(
+    radionica_id int NOT NULL,
+    naziv_radionice varchar(30) NOT NULL,
+    opis_radionice varchar(50) NOT NULL,
+
+    constraint PK_Tip_radionice primary key(radionica_id)
+)
+go
+
+create table Vulkanizer.Radionica
+(
+    radionica_id int NOT NULL,
+    rad_id int NOT NULL,
+    naziv_radionice varchar(20) NOT NULL,
+    max_br_radnika int NOT NULL,
+    max_br_masina int NOT NULL,
+
+    constraint PK_Radionica primary key(radionica_id, rad_id),
+    
+    constraint FK_Radionica_Tip_radionice foreign key(radionica_id)
+        references Vulkanizer.Tip_radionice(radionica_id)
+)
+go
+
+create table Vulkanizer.ima_zalihe
+(
+    radionica_id int NOT NULL,
+    rad_id int NOT NULL,
+    materijal_id int NOT NULL,
+
+    constraint PK_ima_zalihe primary key(radionica_id, rad_id, materijal_id),
+    
+    constraint FK_ima_zalihe_Radionica foreign key(radionica_id, rad_id)
+        references Vulkanizer.Radionica(radionica_id, rad_id),
+    constraint FK_ima_zalihe_Materijal foreign key(materijal_id)
+        references Vulkanizer.Materijal(materijal_id)
+)
+go
+
+create table Vulkanizer.ima_kapacitet
+(
+    radionica_id int NOT NULL,
+    tip_id int NOT NULL,
+
+    constraint PK_ima_kapacitet primary key(radionica_id, tip_id),
+    
+    constraint FK_ima_kapacitet_Tip_radionice foreign key(radionica_id)
+        references Vulkanizer.Tip_radionice(radionica_id),
+    constraint FK_ima_kapacitet_Tip_Masine foreign key(tip_id)
+        references Vulkanizer.Tip_Masine(tip_id)
+)
+go
+
+create table Vulkanizer.se_upotrebljava_u
+(
+    tip_id int NOT NULL,
+    masina_id int NOT NULL,
+    radionica_id int NOT NULL,
+    rad_id int NOT NULL,
+
+    constraint PK_se_upotrebljava_u primary key(tip_id, masina_id, radionica_id, rad_id),
+    
+    constraint FK_se_upotrebljava_u_Masina foreign key(tip_id, masina_id)
+        references Vulkanizer.Masina(tip_id, masina_id),
+    constraint FK_se_upotrebljava_u_Radionica foreign key(radionica_id, rad_id)
+        references Vulkanizer.Radionica(radionica_id, rad_id)
+)
+go
+
+create table Vulkanizer.Katalog_usluga
+(
+    usluga_id int NOT NULL,
+
+    constraint PK_Katalog_usluga primary key(usluga_id)
+)
+go
+
+create table Vulkanizer.se_koristi
+(
+    usluga_id int NOT NULL,
+    materijal_id int NOT NULL,
+
+    constraint PK_se_koristi primary key(usluga_id, materijal_id),
+    
+    constraint FK_se_koristi_Katalog_usluga foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id),
+    constraint FK_se_koristi_Materijal foreign key(materijal_id)
+        references Vulkanizer.Materijal(materijal_id)
+)
+go
+
+create table Vulkanizer.koristi_se
+(
+    usluga_id int NOT NULL,
+    tip_id int NOT NULL,
+
+    constraint PK_koristi_se primary key(usluga_id, tip_id),
+    
+    constraint FK_koristi_se_Katalog_usluga foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id),
+    constraint FK_koristi_se_Tip_Masine foreign key(tip_id)
+        references Vulkanizer.Tip_Masine(tip_id)
+)
+go
+
+create table Vulkanizer.se_izvrsava
+(
+    usluga_id int NOT NULL,
+    radionica_id int NOT NULL,
+
+    constraint PK_se_izvrsava primary key(usluga_id, radionica_id),
+    
+    constraint FK_se_izvrsava_Katalog_usluga foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id),
+    constraint FK_se_izvrsava_Tip_radionice foreign key(radionica_id)
+        references Vulkanizer.Tip_radionice(radionica_id)
+)
+go
+
+create table Vulkanizer.Vulkanizerska_usluga
+(
+    usluga_id int NOT NULL,
+    tip_felne varchar(20) NOT NULL,
+    vrsta_vozila varchar(20) NOT NULL,
+
+    constraint PK_Vulkanizerska_usluga primary key(usluga_id),
+    
+    constraint FK_Vulkanizerska_usluga_Katalog foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id)
+)
+go
+
+create table Vulkanizer.Usluga_rucnog_pranja
+(
+    usluga_id int NOT NULL,
+    obim_pranja varchar(20) NOT NULL,
+    tip_hemije varchar(20) NOT NULL,
+
+    constraint PK_Usluga_rucnog_pranja primary key(usluga_id),
+    
+    constraint FK_Usluga_rucnog_pranja_Katalog foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id)
+)
+go
+
+create table Vulkanizer.Usluga_tehnickog_pregleda
+(
+    usluga_id int NOT NULL,
+    kategorija_vozila varchar(5) NOT NULL,
+    vrsta_pregleda varchar(20) NOT NULL,
+    licenca_id int NULL,
+    zaposleni_id int NULL,
+
+    constraint PK_Usluga_tehnickog_pregleda primary key(usluga_id),
+    
+    constraint FK_Usluga_tehnickog_pregleda_Katalog foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id)
+)
+go
+
+create table Vulkanizer.Akcija
+(
+    akcija_id int NOT NULL,
+    dat_poc_akc date NOT NULL,
+    datum_zav_akc date NOT NULL,
+    naziv_akc varchar(100) NOT NULL,
+    usluga_id int NOT NULL,
+
+    constraint PK_Akcija primary key(akcija_id),
+    
+    constraint FK_Akcija_Katalog_usluga foreign key(usluga_id)
+        references Vulkanizer.Katalog_usluga(usluga_id)
+)
+go
+
+create table Vulkanizer.Popust
+(
+    popust_id int NOT NULL,
+    iznos_popusta DECIMAL(10,2) NOT NULL,
+    procenat_popusta DECIMAL(5,2) NOT NULL,
+    akcija_id int NOT NULL,
+    klijent_id int NULL,
+
+    constraint PK_Popust primary key(popust_id),
+    
+    constraint FK_Popust_Akcija foreign key(akcija_id)
+        references Vulkanizer.Akcija(akcija_id)
+)
+go
+
+-- Insert
+ 
+
+
+-- Katalog usluga 
+INSERT INTO Vulkanizer.Katalog_usluga (usluga_id) VALUES
+(1), (2), (3), (4), (5), (6), (7), (8), (9), (10),
+(11), (12), (13), (14), (15), (16), (17), (18), (19), (20),
+(21), (22), (23), (24), (25), (26), (27), (28), (29), (30);
+GO
+
+-- Vulkanizerske usluge 
+INSERT INTO Vulkanizer.Vulkanizerska_usluga (usluga_id, tip_felne, vrsta_vozila) VALUES
+(1, 'Celicna', 'Putnicko'), (2, 'Alu', 'Putnicko'), (3, 'Celicna', 'Kombi'),
+(4, 'Alu', 'Kombi'), (5, 'Celicna', 'Terenac'), (6, 'Alu', 'Terenac'),
+(7, 'Celicna', 'Putnicko'), (8, 'Alu', 'Putnicko'), (9, 'Celicna', 'Putnicko'), (10, 'Alu', 'Terenac');
+GO
+
+-- Usluge rucnog pranja )
+INSERT INTO Vulkanizer.Usluga_rucnog_pranja (usluga_id, obim_pranja, tip_hemije) VALUES
+(11, 'Spolja', 'Aktivna pena'), (12, 'Unutra', 'Sredstvo za kozu'), (13, 'Komplet', 'Aktivna pena'),
+(14, 'Spolja', 'Sampon'), (15, 'Unutra', 'Sampon'), (16, 'Komplet', 'Vosak'),
+(17, 'Spolja', 'Vosak'), (18, 'Unutra', 'Sredstvo za tablu'), (19, 'Komplet', 'Aktivna pena'), (20, 'Spolja', 'Sampon');
+GO
+
+-- Usluge tehnickog pregleda 
+INSERT INTO Vulkanizer.Usluga_tehnickog_pregleda (usluga_id, kategorija_vozila, vrsta_pregleda, licenca_id, zaposleni_id) VALUES
+(21, 'B', 'Redovni', 101, 1), (22, 'B', 'Vanredni', 101, 1), (23, 'C', 'Redovni', 102, 2),
+(24, 'C', 'Vanredni', 102, 2), (25, 'A', 'Redovni', 103, 3), (26, 'A', 'Vanredni', 103, 3),
+(27, 'B', 'Kontrolni', 101, 1), (28, 'C', 'Kontrolni', 102, 2), (29, 'A', 'Kontrolni', 103, 3), (30, 'B', 'Redovni', 101, 4);
+GO
+
+-- Akcija
+INSERT INTO Vulkanizer.Akcija (akcija_id, dat_poc_akc, datum_zav_akc, naziv_akc, usluga_id) VALUES
+(1, '2024-11-01', '2024-11-30', 'Zimska sezona 2024', 1),
+(2, '2024-04-01', '2024-04-30', 'Letnja sezona 2024', 2),
+(3, '2024-12-01', '2024-12-31', 'Praznicno pranje', 11),
+(4, '2024-12-01', '2024-12-31', 'Dubinsko popust', 12),
+(5, '2024-01-01', '2024-12-31', 'Stalna akcija TP', 21),
+(6, '2024-05-01', '2024-05-31', 'Prolecno ciscenje', 13),
+(7, '2024-06-01', '2024-06-30', 'Besplatna provera pred put', 27),
+(8, '2024-07-01', '2024-07-31', 'Moto susreti', 25),
+(9, '2024-08-01', '2024-08-31', 'Kombi pranje', 14),
+(10, '2024-09-01', '2024-09-30', 'Spremite se za kisu', 4),
+(11, '2024-09-01', '2028-09-30', 'Spremite se za kisu2', 4);
+GO
+
+-- Unos popusta za novu akciju broj 11 (npr. fiksni popust 600 RSD)
+INSERT INTO Vulkanizer.Popust (popust_id, iznos_popusta, procenat_popusta, akcija_id, klijent_id) 
+VALUES (11, 600.00, 0.00, 11, NULL);
+GO
+
+-- Popust
+INSERT INTO Vulkanizer.Popust (popust_id, iznos_popusta, procenat_popusta, akcija_id, klijent_id) VALUES
+(1, 0.00, 10.00, 1, 1001),
+(2, 500.00, 0.00, 2, NULL),
+(3, 0.00, 20.00, 3, 1002),
+(4, 1000.00, 0.00, 4, 1003),
+(5, 0.00, 5.00, 5, NULL),
+(6, 300.00, 0.00, 6, 1004),
+(7, 0.00, 100.00, 7, NULL),
+(8, 0.00, 15.00, 8, 1005),
+(9, 0.00, 10.00, 9, 1006),
+(10, 400.00, 0.00, 10, NULL);
+GO
+
+
+-- Dobavljac
+INSERT INTO Vulkanizer.Dobavljac (dobavljac_id, email_dob, naziv_dob, telefon_dob, grad_dob) VALUES
+(1, 'info@tigar.rs', 'Tigar Tyres', '011-111111', 'Pirot'),
+(2, 'prodaja@michelin.com', 'Michelin Srbija', '011-222222', 'Beograd'),
+(3, 'office@wurth.rs', 'Wurth', '011-333333', 'Beograd'),
+(4, 'kontakt@kempex.rs', 'Kempex', '021-444444', 'Novi Sad'),
+(5, 'nabavka@lavauto.rs', 'Lav Auto', '011-555555', 'Beograd'),
+(6, 'info@bosch.rs', 'Bosch', '011-666666', 'Beograd'),
+(7, 'prodaja@karcher.rs', 'Karcher Srbija', '011-777777', 'Beograd'),
+(8, 'office@beoguma.rs', 'Beoguma', '011-888888', 'Beograd'),
+(9, 'kontakt@continental.com', 'Continental', '011-999999', 'Novi Sad'),
+(10, 'info@autooprema.rs', 'Auto Oprema DOO', '011-101010', 'Nis');
+GO
+
+-- Materijal
+INSERT INTO Vulkanizer.Materijal (materijal_id, naziv_mat, proizvodjac_mat, kolicina_mat) VALUES
+(1, 'Zimska guma 205/55R16', 'Tigar', 100.00),
+(2, 'Letnja guma 195/65R15', 'Michelin', 80.00),
+(3, 'Tegovi za balansiranje', 'Wurth', 500.00),
+(4, 'Ventili za gume', 'Wurth', 300.00),
+(5, 'Aktivna pena 10L', 'Kempex', 20.00),
+(6, 'Sampon za pranje 5L', 'Karcher', 15.00),
+(7, 'Vosak za poliranje 1L', 'Kempex', 10.00),
+(8, 'Ulje za dizalice 5L', 'Bosch', 5.00),
+(9, 'Pasta za montazu guma', 'Wurth', 50.00),
+(10, 'Krpe od mikrovlakana', 'Auto Oprema DOO', 200.00);
+GO
+
+-- Dobavlja
+INSERT INTO Vulkanizer.dobavlja (dobavljac_id, materijal_id) VALUES
+(1, 1), (2, 2), (3, 3), (3, 4), (4, 5), (7, 6), (4, 7), (6, 8), (3, 9), (10, 10);
+GO
+
+
+-- Tip_masine
+INSERT INTO Vulkanizer.Tip_Masine (tip_id, nazim_tm) VALUES
+(1, 'Dvostubna dizalica'), (2, 'Cetvorostubna dizalica'), (3, 'Masina za montazu guma'),
+(4, 'Masina za balansiranje'), (5, 'Kompresor za vazduh'), (6, 'Masina za pranje pod pritiskom'),
+(7, 'Usisivac za dubinsko pranje'), (8, 'Uredjaj za merenje izduvnih gasova'),
+(9, 'Valjci za kocnice'), (10, 'Uredjaj za centriranje trapa');
+GO
+
+-- Masina
+INSERT INTO Vulkanizer.Masina (tip_id, masina_id, serijski_broj_mas, model_mas) VALUES
+(1, 1, 'SN-001', 'Bosch Lift 2000'), (2, 1, 'SN-002', 'Bosch Lift 4000'),
+(3, 1, 'SN-003', 'Hofmann Monty'), (4, 1, 'SN-004', 'Hofmann Geodyna'),
+(5, 1, 'SN-005', 'Abac 200L'), (6, 1, 'SN-006', 'Karcher HDS'),
+(7, 1, 'SN-007', 'Karcher Puzzi'), (8, 1, 'SN-008', 'BrainBee'),
+(9, 1, 'SN-009', 'Maha Valjci'), (10, 1, 'SN-010', 'Hunter HawkEye');
+GO
+
+-- Isporucuje
+INSERT INTO Vulkanizer.isporucuje (masina_id, tip_id, dobavljac_id) VALUES
+(1, 1, 6), (1, 2, 6), (1, 3, 5), (1, 4, 5), (1, 5, 3), (1, 6, 7), (1, 7, 7), (1, 8, 5), (1, 9, 5), (1, 10, 5);
+GO
+
+-- Tip_radionice
+INSERT INTO Vulkanizer.Tip_radionice (radionica_id, naziv_radionice, opis_radionice) VALUES
+(1, 'Vulkanizer putnicki', 'Za putnicka vozila'),
+(2, 'Vulkanizer teretni', 'Za teretna vozila'),
+(3, 'Pranje standard', 'Spoljasnje pranje'),
+(4, 'Pranje dubinsko', 'Dubinsko pranje enterijera'),
+(5, 'Tehnicki putnicki', 'Tehnicki pregled B kategorije'),
+(6, 'Tehnicki teretni', 'Tehnicki pregled C kategorije'),
+(7, 'Brzi servis', 'Brza zamena ulja i guma'),
+(8, 'Vulkanizer VIP', 'Prioritetna vulkanizerska linija'),
+(9, 'Pranje VIP', 'Kompletno VIP pranje vozila'),
+(10, 'Tehnicki motori', 'Tehnicki pregled A kategorije');
+GO
+
+-- Radionica
+INSERT INTO Vulkanizer.Radionica (radionica_id, rad_id, naziv_radionice, max_br_radnika, max_br_masina) VALUES
+(1, 1, 'Boks 1', 2, 3), (2, 1, 'Boks Teretni', 3, 4), (3, 1, 'Perionica 1', 2, 2),
+(4, 1, 'Perionica VIP', 1, 1), (5, 1, 'Linija 1 TP', 3, 5), (6, 1, 'Linija Teretna TP', 4, 6),
+(7, 1, 'Boks Brzi', 2, 2), (8, 1, 'Boks VIP', 2, 3), (9, 1, 'Perionica 2', 2, 2), (10, 1, 'Linija Moto TP', 1, 2);
+GO
+
+-- ima_zalihe
+INSERT INTO Vulkanizer.ima_zalihe (radionica_id, rad_id, materijal_id) VALUES
+(1, 1, 1), (1, 1, 3), (2, 1, 2), (3, 1, 5), (3, 1, 6), (4, 1, 7), (5, 1, 8), (7, 1, 9), (9, 1, 10), (1, 1, 4);
+GO
+
+-- ima_kapacitet
+INSERT INTO Vulkanizer.ima_kapacitet (radionica_id, tip_id) VALUES
+(1, 1), (1, 3), (2, 2), (2, 4), (3, 6), (4, 7), (5, 8), (5, 9), (7, 1), (10, 5);
+GO
+
+-- se_upotrebljava_u
+INSERT INTO Vulkanizer.se_upotrebljava_u (tip_id, masina_id, radionica_id, rad_id) VALUES
+(1, 1, 1, 1), (2, 1, 2, 1), (3, 1, 1, 1), (4, 1, 2, 1), (5, 1, 7, 1),
+(6, 1, 3, 1), (7, 1, 4, 1), (8, 1, 5, 1), (9, 1, 5, 1), (10, 1, 5, 1);
+GO
+
+-- se_korisit
+INSERT INTO Vulkanizer.se_koristi (usluga_id, materijal_id) VALUES
+(1, 1), (1, 3), (1, 4), (2, 2), (2, 9), (11, 5), (11, 6), (12, 7), (13, 10), (21, 8);
+GO
+
+-- koristi_se
+INSERT INTO Vulkanizer.koristi_se (usluga_id, tip_id) VALUES
+(1, 1), (1, 3), (1, 4), (2, 1), (3, 2), (11, 6), (12, 7), (21, 8), (21, 9), (22, 10);
+GO
+
+-- se_izvrsava
+INSERT INTO Vulkanizer.se_izvrsava (usluga_id, radionica_id) VALUES
+(1, 1), (2, 1), (3, 2), (4, 2), (5, 7), (11, 3), (12, 4), (13, 9), (21, 5), (25, 10);
+GO
+
+
+/* 
+   UPIT 1: Dobavljaci koji isporučuju vise razlicitih materijala od proseka
+ */
+SELECT 
+    d.naziv_dob AS Dobavljac, 
+    COUNT(dob.materijal_id) AS Broj_Razlicitih_Materijala
+FROM Vulkanizer.Dobavljac d
+JOIN Vulkanizer.dobavlja dob ON d.dobavljac_id = dob.dobavljac_id
+GROUP BY d.naziv_dob
+HAVING COUNT(dob.materijal_id) > (
+   
+    SELECT AVG(Broj_Mat) 
+    FROM (
+        SELECT COUNT(materijal_id) as Broj_Mat
+        FROM Vulkanizer.dobavlja
+        GROUP BY dobavljac_id
+    ) AS Proseci
+);
+GO
+
+
+
+
+  -- UPIT 2: Aktivne akcije sa prikazom ostvarenog popusta 
+   
+SELECT 
+    ku.usluga_id,
+    a.naziv_akc AS Aktivna_Akcija,
+    CASE 
+        WHEN p.procenat_popusta > 0 THEN CAST(CAST(p.procenat_popusta AS INT) AS VARCHAR) + '%'
+        WHEN p.iznos_popusta > 0 THEN CAST(CAST(p.iznos_popusta AS INT) AS VARCHAR) + ' RSD'
+        ELSE 'Nema popusta'
+    END AS Ostvareni_Popust
+FROM Vulkanizer.Katalog_usluga ku
+JOIN Vulkanizer.Akcija a ON ku.usluga_id = a.usluga_id
+LEFT JOIN Vulkanizer.Popust p ON a.akcija_id = p.akcija_id
+WHERE CAST(GETDATE() AS DATE) BETWEEN a.dat_poc_akc AND a.datum_zav_akc;
+GO
+
+
+
+
+/*
+   UPIT 3: Pregled opterećenosti i raznovrsnosti zaliha po radionicama 
+   Opis: Racuna ukupan broj razlicitih materijala na zalihama za svaku 
+   pojedinacnu radionicu
+   */
+SELECT 
+    r.naziv_radionice AS Radionica,
+    tr.opis_radionice AS Tip_radionice,
+    COUNT(iz.materijal_id) AS Broj_razlicitih_materijala
+FROM Vulkanizer.Radionica r
+JOIN Vulkanizer.Tip_radionice tr ON r.radionica_id = tr.radionica_id
+LEFT JOIN Vulkanizer.ima_zalihe iz ON r.radionica_id = iz.radionica_id AND r.rad_id = iz.rad_id
+GROUP BY 
+    r.naziv_radionice, 
+    tr.opis_radionice
+ORDER BY Broj_razlicitih_materijala DESC;
+GO
+
+
+
+  -- UPIT 4: Pregled radionica, njihovog tipa, podržanih usluga i masina
+   
+SELECT DISTINCT
+    r.naziv_radionice AS Ime_Radionice,
+    tr.naziv_radionice AS Tip_Radionice,
+    si.usluga_id AS ID_Usluge_Koja_Se_Izvrsava,
+    m.model_mas AS Masina_U_Radionici
+FROM Vulkanizer.Radionica r
+JOIN Vulkanizer.Tip_radionice tr ON r.radionica_id = tr.radionica_id
+LEFT JOIN Vulkanizer.se_izvrsava si ON tr.radionica_id = si.radionica_id
+LEFT JOIN Vulkanizer.se_upotrebljava_u su ON r.radionica_id = su.radionica_id AND r.rad_id = su.rad_id
+LEFT JOIN Vulkanizer.Masina m ON su.tip_id = m.tip_id AND su.masina_id = m.masina_id
+ORDER BY r.naziv_radionice, si.usluga_id;
+GO
+
+
+/* 
+   UPIT 5:  Prikazuje svaki materijal i broji u koliko razlicitih usluga se on 
+   koristi.
+ */
+SELECT 
+    m.naziv_mat AS Materijal,
+    m.proizvodjac_mat AS Proizvodjac,
+    COUNT(sk.usluga_id) AS Broj_Usluga_Koje_Ga_Koriste,
+    CASE 
+        WHEN COUNT(sk.usluga_id) = 0 THEN 'Nekoriscena zaliha'
+        WHEN COUNT(sk.usluga_id) > 2 THEN 'Visoko trazen materijal'
+        ELSE 'Standardna potrosnja'
+    END AS Status_Materijala
+FROM Vulkanizer.Materijal m
+LEFT JOIN Vulkanizer.se_koristi sk ON m.materijal_id = sk.materijal_id
+GROUP BY 
+    m.materijal_id, 
+    m.naziv_mat, 
+    m.proizvodjac_mat
+ORDER BY Broj_Usluga_Koje_Ga_Koriste DESC;
+GO
+
+
+ -- SEKVENCA 1: Sekvenca za generisanje ID-ja Akcije
+
+
+IF OBJECT_ID('Vulkanizer.AkcijaSeq', 'SO') IS NOT NULL 
+    DROP SEQUENCE Vulkanizer.AkcijaSeq;
+GO
+
+CREATE SEQUENCE Vulkanizer.AkcijaSeq
+    AS INT
+    START WITH 100    
+    INCREMENT BY 1;
+GO
+
+
+INSERT INTO Vulkanizer.Akcija (akcija_id, dat_poc_akc, datum_zav_akc, naziv_akc, usluga_id)
+VALUES (
+    NEXT VALUE FOR Vulkanizer.AkcijaSeq, 
+    '2024-12-15', 
+    '2024-12-31', 
+    'Novogodisnja akcija', 
+    1
+);
+GO
+
+-- Provera unosa
+SELECT * FROM Vulkanizer.Akcija WHERE naziv_akc = 'Novogodisnja akcija';
+GO
+
+
+/* 
+   SEKVENCA 2: Sekvenca za generisanje ID-ja Popusta
+   Upotreba: Vezivanje sekvence za kolonu popust_id preko DEFAULT ogranicenja.
+ */
+
+
+IF OBJECT_ID('Vulkanizer.PopustSeq', 'SO') IS NOT NULL 
+    DROP SEQUENCE Vulkanizer.PopustSeq;
+GO
+
+CREATE SEQUENCE Vulkanizer.PopustSeq
+    AS INT
+    START WITH 100
+    INCREMENT BY 1;
+GO
+
+
+ALTER TABLE Vulkanizer.Popust
+    ADD CONSTRAINT DFT_Popust_ID 
+    DEFAULT (NEXT VALUE FOR Vulkanizer.PopustSeq) FOR popust_id;
+GO
+
+
+INSERT INTO Vulkanizer.Popust (iznos_popusta, procenat_popusta, akcija_id, klijent_id)
+VALUES (1500.00, 0.00, 1, NULL);
+GO
+
+
+SELECT * FROM Vulkanizer.Popust WHERE iznos_popusta = 1500.00;
+GO
+
+
+/* 
+   INDEKS 1: Pokrivajuci indeks na tabeli Materijal
+   Opis: Ovaj indeks značajno ubrzava pretragu materijala po imenu (naziv_mat).
+   Umesto obicnog indeksa, kreiran je pokrivajuci index (INCLUDE) koji u 
+   sebe ukljucuje proizvodjaca i kolicinu. 
+ */
+
+
+IF EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Materijal_Naziv_Cover')
+    DROP INDEX IX_Materijal_Naziv_Cover ON Vulkanizer.Materijal;
+GO
+
+
+CREATE NONCLUSTERED INDEX IX_Materijal_Naziv_Cover
+ON Vulkanizer.Materijal(naziv_mat)
+INCLUDE (proizvodjac_mat, kolicina_mat);
+GO
+
+
+SELECT 
+    naziv_mat, 
+    proizvodjac_mat, 
+    kolicina_mat 
+FROM Vulkanizer.Materijal 
+WHERE naziv_mat = 'Zimska guma 205/55R16';
+GO
+
+
+/* 
+   14. KURSOR: Generisanje izvestaja o stanju zaliha
+   Opis: Procedura deklarise kursor koji iterira kroz tabelu Materijal red po red. 
+   Za svaki materijal dinamicki proverava kolicinu i generise print 
+   odgovarajuce upozorenje ukoliko zalihe padnu na kritican nivo.
+ */
+IF OBJECT_ID('Vulkanizer.PrikaziUpozorenjaZaZalihe', 'P') IS NOT NULL
+    DROP PROCEDURE Vulkanizer.PrikaziUpozorenjaZaZalihe;
+GO
+CREATE PROCEDURE Vulkanizer.PrikaziUpozorenjaZaZalihe
+AS
+BEGIN
+   
+    DECLARE @NazivMat VARCHAR(30);
+    DECLARE @Kolicina DECIMAL(10,2);
+    DECLARE @StatusPoruka VARCHAR(100);
+
+    DECLARE kursor_zalihe CURSOR FOR
+    SELECT naziv_mat, kolicina_mat FROM Vulkanizer.Materijal;
+    
+    OPEN kursor_zalihe;
+    FETCH NEXT FROM kursor_zalihe INTO @NazivMat, @Kolicina;
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF @Kolicina = 0
+            SET @StatusPoruka = 'KRITIČNO: Nema na stanju, hitno nabaviti!';
+        ELSE IF @Kolicina < 20
+            SET @StatusPoruka = 'UPOZORENJE: Zalihe su pri kraju.';
+        ELSE
+            SET @StatusPoruka = 'STABILNO: Dovoljno zaliha za rad.';
+       
+        PRINT 'Materijal: ' + @NazivMat + ' | Stanje: ' + CAST(@Kolicina AS VARCHAR) + ' | Status: ' + @StatusPoruka;
+
+        FETCH NEXT FROM kursor_zalihe INTO @NazivMat, @Kolicina;
+    END
+    
+    CLOSE kursor_zalihe;
+    DEALLOCATE kursor_zalihe;
+END
+
+-- Testiranje 
+EXEC Vulkanizer.PrikaziUpozorenjaZaZalihe;
+GO
+
+
+/* 
+   15. TRANSAKCIJA: Bezbedno brisanje Akcije i njenih popusta (Parent-Child)
+   
+ */
+IF OBJECT_ID('Vulkanizer.ObrisiAkcijuSaPopustima', 'P') IS NOT NULL
+    DROP PROCEDURE Vulkanizer.ObrisiAkcijuSaPopustima;
+GO
+CREATE PROCEDURE Vulkanizer.ObrisiAkcijuSaPopustima
+    @AkcijaID INT
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION;
+        DELETE FROM Vulkanizer.Popust
+        WHERE akcija_id = @AkcijaID;
+
+        DELETE FROM Vulkanizer.Akcija
+        WHERE akcija_id = @AkcijaID;
+
+        COMMIT TRANSACTION;
+        PRINT 'Akcija i svi njeni popusti su uspesno i bezbedno obrisani.';
+
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        PRINT 'Doslo je do greske. Transakcija je ponistena i podaci nisu obrisani.';
+        PRINT ERROR_MESSAGE(); 
+    END CATCH
+END
+GO
+
+
+-- Testiranje Transakcije
+
+-- Kreiramo testnu akciju i njen popust
+INSERT INTO Vulkanizer.Akcija (akcija_id, dat_poc_akc, datum_zav_akc, naziv_akc, usluga_id) 
+VALUES (999, '2024-01-01', '2024-01-31', 'Test Transakcije', 1);
+
+INSERT INTO Vulkanizer.Popust (popust_id, iznos_popusta, procenat_popusta, akcija_id, klijent_id) 
+VALUES (999, 100.00, 0.00, 999, NULL);
+
+-- Pokrećemo proceduru koja će kroz transakciju obrisati oba unosa
+EXEC Vulkanizer.ObrisiAkcijuSaPopustima @AkcijaID = 999;
+GO
+
+-- Provera (trebalo bi da vrati prazno)
+SELECT * FROM Vulkanizer.Akcija WHERE akcija_id = 999;
+GO
+
+
+/* 
+   12. FUNKCIJA: Dobijanje trenutnog popusta za određenu uslugu
+   
+*/
+IF OBJECT_ID('Vulkanizer.ufn_TrenutniPopustUsluge', 'FN') IS NOT NULL
+    DROP FUNCTION Vulkanizer.ufn_TrenutniPopustUsluge;
+GO
+CREATE FUNCTION Vulkanizer.ufn_TrenutniPopustUsluge(@UslugaID INT)
+RETURNS VARCHAR(20)
+AS
+BEGIN
+    DECLARE @Rezultat VARCHAR(20);
+    
+    
+    SELECT TOP 1 @Rezultat = 
+        CASE 
+            WHEN p.procenat_popusta > 0 THEN CAST(CAST(p.procenat_popusta AS INT) AS VARCHAR) + '%'
+            WHEN p.iznos_popusta > 0 THEN CAST(CAST(p.iznos_popusta AS INT) AS VARCHAR) + ' RSD'
+        END
+    FROM Vulkanizer.Akcija a
+    JOIN Vulkanizer.Popust p ON a.akcija_id = p.akcija_id
+    WHERE a.usluga_id = @UslugaID 
+      AND CAST(GETDATE() AS DATE) BETWEEN a.dat_poc_akc AND a.datum_zav_akc
+    ORDER BY p.procenat_popusta DESC, p.iznos_popusta DESC; 
+    IF @Rezultat IS NULL
+        SET @Rezultat = 'Nema popusta';
+        
+    RETURN @Rezultat;
+END
+GO
+
+
+--Testiranje
+
+SELECT 
+    usluga_id, 
+    Vulkanizer.ufn_TrenutniPopustUsluge(usluga_id) AS Aktuelni_Popust 
+FROM Vulkanizer.Katalog_usluga;
+GO
+
+/* 
+   13. TRIGER 1: Sprečavanje brisanja materijala koji je na zalihama
+   
+*/
+IF OBJECT_ID('Vulkanizer.trg_SpreciBrisanjeMaterijala', 'TR') IS NOT NULL
+    DROP TRIGGER Vulkanizer.trg_SpreciBrisanjeMaterijala;
+GO
+
+CREATE TRIGGER Vulkanizer.trg_SpreciBrisanjeMaterijala
+ON Vulkanizer.Materijal
+INSTEAD OF DELETE
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM deleted WHERE kolicina_mat > 0)
+    BEGIN
+        RAISERROR('Zabranjeno brisanje! Ne mozete obrisati materijal koji se jos uvek nalazi na zalihama.', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+    ELSE
+    BEGIN
+        -- Ako je kolicina 0 za sve izabrane materijale, dozvoljavamo ručno brisanje
+        DELETE FROM Vulkanizer.Materijal
+        WHERE materijal_id IN (SELECT materijal_id FROM deleted);
+        
+        PRINT 'Materijal uspesno obrisan jer nema zaliha na stanju.';
+    END
+END
+GO
+
+-- PRIMER OKIDANJA TRIGERA 1
+-- Pokušaj brisanja materijala koji ima zalihe (Ovo će baciti grešku):
+-- DELETE FROM Vulkanizer.Materijal WHERE materijal_id = 1;
+-- GO
+
+
+/* 
+   13. TRIGER 2: Validacija logike datuma za Akcije
+   
+ */
+IF OBJECT_ID('Vulkanizer.trg_ValidacijaDatumaAkcije', 'TR') IS NOT NULL
+    DROP TRIGGER Vulkanizer.trg_ValidacijaDatumaAkcije;
+GO
+
+CREATE TRIGGER Vulkanizer.trg_ValidacijaDatumaAkcije
+ON Vulkanizer.Akcija
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    
+    IF EXISTS (SELECT 1 FROM inserted WHERE dat_poc_akc > datum_zav_akc)
+    BEGIN
+        RAISERROR('Logicka greska! Datum pocetka akcije ne moze biti kasniji od datuma njenog zavrsetka.', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END
+GO
+
+
+-- PRIMER OKIDANJA TRIGERA 2
+
+-- Pokusaj unosa akcije koja se zavrsava pre nego sto i pocne (Baca gresku):
+/*
+INSERT INTO Vulkanizer.Akcija (akcija_id, dat_poc_akc, datum_zav_akc, naziv_akc, usluga_id)
+VALUES (999, '2024-12-31', '2024-12-01', 'Nemoguca akcija', 1);
+GO
+*/

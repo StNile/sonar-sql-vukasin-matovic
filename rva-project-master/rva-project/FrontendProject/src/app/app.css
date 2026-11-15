@@ -1,0 +1,49 @@
+mat-sidenav {
+  background-color: rgba(230, 230, 247, 0.809);
+}
+
+a[mat-button] {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+mat-nav-list {
+  padding: 0 7px;
+}
+
+a[mat-raised-button] {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  color: white;
+  margin: 6px 0;
+}
+
+mat-expansion-panel {
+  border-radius: 12px !important;
+  transition: all 0.3s ease;
+}
+
+mat-expansion-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+mat-expansion-panel-header {
+  transition: all 0.3s ease;
+}
+
+mat-expansion-panel-header:hover {
+  background: linear-gradient(90deg, rgba(233, 30, 99, 0.08), rgba(156, 39, 176, 0.08)) !important;
+}
+
+mat-panel-title {
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+mat-expansion-panel:hover mat-panel-title {
+  color: #e91e63;
+}

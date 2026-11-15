@@ -1,0 +1,34 @@
+table {
+  width: 100%;
+}
+
+mat-toolbar {
+  justify-content: center;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+mat-toolbar {
+  background-color: pink;
+}
+tr.mat-mdc-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+tr.mat-mdc-row:hover {
+  background-color: rgba(255, 192, 203, 0.2);
+}
+
+tr.mat-mdc-row:hover td {
+  font-weight: 600;
+}
+.hint {
+  margin: 10px;
+  color: #e91e63;
+  font-weight: bold;
+}
